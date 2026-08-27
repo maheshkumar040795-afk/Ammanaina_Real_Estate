@@ -751,6 +751,7 @@ footer{background:var(--forest);padding:3rem 2rem 1.5rem}
         <option value="Mixed Use">Mixed Use</option>
         <option value="Built House (New)">Built House (New)</option>
         <option value="Built House (Old)">Built House (Old)</option>
+        <option value="Apartment">Apartment</option>
       </select>
       <input type="number" class="sg-input" id="heroPrice" placeholder="Max ₹...">
       <button class="btn-search" id="btnSearch">
@@ -770,6 +771,7 @@ footer{background:var(--forest);padding:3rem 2rem 1.5rem}
   <button class="filter-chip" onclick="setChipFilter('Mixed Use', this)">Mixed Use</button>
   <button class="filter-chip" onclick="setChipFilter('Built House (New)', this)">House New</button>
   <button class="filter-chip" onclick="setChipFilter('Built House (Old)', this)">House Old</button>
+  <button class="filter-chip" onclick="setChipFilter('Apartment', this)">Apartment</button>
   <select class="sort-select" id="sortSelect">
     <option value="newest">Newest First</option>
     <option value="oldest">Oldest First</option>
@@ -1032,7 +1034,7 @@ function updateStats() {
   const active = listings.filter(l => !l.sold);
   document.getElementById('statTotal').textContent = active.length;
   const landTypes = ['Residential Plot','Commercial Plot','Agricultural Land','Industrial Land'];
-  const houseTypes = ['Built House (New)','Built House (Old)'];
+  const houseTypes = ['Built House (New)','Built House (Old)','Apartment'];
   document.getElementById('statLand').textContent = active.filter(l => landTypes.includes(l.type) || l.type === 'Mixed Use').length;
   document.getElementById('statHouse').textContent = active.filter(l => houseTypes.includes(l.type) || l.type === 'Mixed Use').length;
   const today = new Date().toDateString();
@@ -1116,6 +1118,7 @@ function renderListings() {
           <div class="spec-item"><i class="fas fa-ruler-combined"></i> ${l.size||'N/A'}</div>
           <div class="spec-item"><i class="fas fa-compass"></i> ${l.facing||'N/A'}</div>
           ${l.dimensions ? `<div class="spec-item"><i class="fas fa-vector-square"></i> ${l.dimensions}</div>` : ''}
+          ${(l.type === 'Apartment' && l.floorNumber) ? `<div class="spec-item"><i class="fas fa-building"></i> ${l.floorNumber}</div>` : ''}
           ${l.owner ? `<div class="spec-item"><i class="fas fa-user"></i> ${l.owner}</div>` : ''}
         </div>
         <div class="card-footer">
@@ -1225,6 +1228,7 @@ function openDetail(id) {
       <div class="detail-block"><div class="detail-block-label">Area Size</div><div class="detail-block-value">${l.size||'N/A'}</div></div>
       ${l.dimensions ? `<div class="detail-block"><div class="detail-block-label">Dimensions</div><div class="detail-block-value">${l.dimensions}</div></div>` : ''}
       ${l.facing ? `<div class="detail-block"><div class="detail-block-label">Facing</div><div class="detail-block-value">${l.facing}</div></div>` : ''}
+      ${(l.type === 'Apartment' && l.floorNumber) ? `<div class="detail-block"><div class="detail-block-label">Floor Number</div><div class="detail-block-value">${l.floorNumber}</div></div>` : ''}
     </div>
     ${l.details ? `<p class="modal-desc">${l.details}</p>` : ''}
     ${l.instaReelUrl && getInstaReelId(l.instaReelUrl) ? buildInstaReelPlayer(l.instaReelUrl) : ''}

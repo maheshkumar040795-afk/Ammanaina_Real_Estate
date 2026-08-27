@@ -340,6 +340,7 @@ onSnapshot(staffQ, snap => {
         <option>Agricultural Land</option><option>Industrial Land</option>
         <option>Mixed Use</option>
         <option>Built House (New)</option><option>Built House (Old)</option>
+        <option>Apartment</option>
       </select>
     </div>
     <div class="admin-table-wrap">
@@ -443,13 +444,15 @@ onSnapshot(staffQ, snap => {
       <div class="form-grid" style="margin-top:1.25rem">
         <div><div class="f-label">Property ID</div><input type="text" class="f-input" id="fId" readonly placeholder="Auto-generated"></div>
         <div><div class="f-label">Property Type <span style="color:var(--saffron)">*</span></div>
-          <select class="f-input" id="fType">
+          <select class="f-input" id="fType" onchange="toggleFloorField(this.value)">
             <option value="">Select Type</option>
             <option>Residential Plot</option><option>Commercial Plot</option>
             <option>Agricultural Land</option><option>Industrial Land</option>
             <option>Mixed Use</option><option>Built House (New)</option><option>Built House (Old)</option>
+            <option>Apartment</option>
           </select>
         </div>
+        <div id="floorFieldWrap" style="display:none"><div class="f-label">Floor Number</div><input type="text" class="f-input" id="fFloorNumber" placeholder="e.g. 3rd Floor, Ground Floor"></div>
         <div class="fg-full"><div class="f-label">Title <span style="color:var(--saffron)">*</span></div><input type="text" class="f-input" id="fTitle" placeholder="e.g. Prime corner plot near highway"></div>
         <div><div class="f-label">Location / Area <span style="color:var(--saffron)">*</span></div><input type="text" class="f-input" id="fLocation" placeholder="Area name, street…"></div>
         <div><div class="f-label">City / District</div><input type="text" class="f-input" id="fCity" placeholder="e.g. Nagercoil"></div>
@@ -585,7 +588,7 @@ function updateStats(){
   const L=window._listings;
   document.getElementById('s1').textContent=L.length;
   const landTypes=['Residential Plot','Commercial Plot','Agricultural Land','Industrial Land'];
-  const houseTypes=['Built House (New)','Built House (Old)'];
+  const houseTypes=['Built House (New)','Built House (Old)','Apartment'];
   document.getElementById('s2').textContent=L.filter(l=>landTypes.includes(l.type)||l.type==='Mixed Use').length;
   document.getElementById('s3').textContent=L.filter(l=>houseTypes.includes(l.type)||l.type==='Mixed Use').length;
   const today=new Date().toDateString();
@@ -673,7 +676,8 @@ function openAddModal(){
   currentDocs=[];
   document.getElementById('modalHdrTitle').innerHTML='<i class="fas fa-plus-circle" style="color:var(--saffron);margin-right:0.5rem"></i>Add New Listing';
   document.getElementById('fId').value=generateCustomId();
-  ['fType','fTitle','fLocation','fCity','fSize','fPrice','fDimensions','fFacing','fDetails','fInstaReel','fSiteLocation'].forEach(id=>document.getElementById(id).value='');
+  ['fType','fTitle','fLocation','fCity','fSize','fPrice','fDimensions','fFacing','fDetails','fInstaReel','fSiteLocation','fFloorNumber'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('floorFieldWrap').style.display='none';
   document.getElementById('fPriceUnit').value='L';
   document.getElementById('fOwner').value='Ammanaina Real Estate';
   document.getElementById('fContact').value='+91 89392 19790';
@@ -702,6 +706,8 @@ function openEditModal(firestoreId){
   document.getElementById('modalHdrTitle').innerHTML='<i class="fas fa-edit" style="color:var(--teal);margin-right:0.5rem"></i>Edit Listing';
   document.getElementById('fId').value=editingCustomId;
   document.getElementById('fType').value=l.type||'';
+  document.getElementById('fFloorNumber').value=l.floorNumber||'';
+  toggleFloorField(l.type||'');
   document.getElementById('fTitle').value=l.title||'';
   document.getElementById('fLocation').value=l.location||'';
   document.getElementById('fCity').value=l.city||'';
@@ -744,6 +750,14 @@ function openEditModal(firestoreId){
 
 function closeEditModal(){document.getElementById('editModal').classList.remove('open');document.body.style.overflow='';}
 function closeModalOnOverlay(e){if(e.target===document.getElementById('editModal'))closeEditModal();}
+
+/* ── FLOOR NUMBER TOGGLE (shown only for Apartment) ── */
+function toggleFloorField(type){
+  const wrap = document.getElementById('floorFieldWrap');
+  const show = type === 'Apartment';
+  wrap.style.display = show ? 'block' : 'none';
+  if(!show) document.getElementById('fFloorNumber').value='';
+}
 
 /* ── ACTUAL OWNER TOGGLE (Admin-only) ── */
 function toggleActualOwner(cb){
@@ -1005,6 +1019,7 @@ async function saveListing(){
       size,price:priceFull,priceUnit,priceValue,
       dimensions:document.getElementById('fDimensions').value.trim(),
       facing:document.getElementById('fFacing').value,
+      floorNumber: type==='Apartment' ? document.getElementById('fFloorNumber').value.trim() : '',
       owner:document.getElementById('fOwner').value.trim(),
       contact:document.getElementById('fContact').value.trim(),
       details:document.getElementById('fDetails').value.trim(),
@@ -1178,7 +1193,7 @@ function exportToExcel(){
 
   const headers = [
     'Property ID','Title','Type','Location','City / District',
-    'Area Size','Price (₹)','Dimensions','Facing',
+    'Area Size','Price (₹)','Dimensions','Facing','Floor Number',
     'Posted Date','Photo Count','Document Count','Instagram Reel Link',
     'Owner Name','Owner Contact',
     'Actual Owner Name (Admin)','Actual Owner Contact (Admin)',
@@ -1203,6 +1218,7 @@ function exportToExcel(){
       l.price || '',
       l.dimensions || '',
       l.facing || '',
+      l.floorNumber || '',
       date,
       photoCount,
       docCount,
