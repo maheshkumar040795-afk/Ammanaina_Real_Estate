@@ -1118,7 +1118,9 @@ function renderListings() {
           <div class="spec-item"><i class="fas fa-ruler-combined"></i> ${l.size||'N/A'}</div>
           <div class="spec-item"><i class="fas fa-compass"></i> ${l.facing||'N/A'}</div>
           ${l.dimensions ? `<div class="spec-item"><i class="fas fa-vector-square"></i> ${l.dimensions}</div>` : ''}
-          ${(l.type === 'Apartment' && l.floorNumber) ? `<div class="spec-item"><i class="fas fa-building"></i> ${l.floorNumber}</div>` : ''}
+          ${(l.type === 'Apartment' && l.floorNumber) ? `<div class="spec-item"><i class="fas fa-building"></i> Floor : ${l.floorNumber}</div>` : ''}
+          ${(l.type === 'Apartment' && l.udsSqft) ? `<div class="spec-item"><i class="fas fa-ruler"></i> UDS : ${l.udsSqft}</div>` : ''}
+          ${(l.type === 'Agricultural Land' && l.landUnitValue) ? `<div class="spec-item"><i class="fas fa-map"></i> ${l.landUnit||'Acre'} : ${l.landUnitValue}</div>` : ''}
           ${l.owner ? `<div class="spec-item"><i class="fas fa-user"></i> ${l.owner}</div>` : ''}
         </div>
         <div class="card-footer">
@@ -1229,6 +1231,8 @@ function openDetail(id) {
       ${l.dimensions ? `<div class="detail-block"><div class="detail-block-label">Dimensions</div><div class="detail-block-value">${l.dimensions}</div></div>` : ''}
       ${l.facing ? `<div class="detail-block"><div class="detail-block-label">Facing</div><div class="detail-block-value">${l.facing}</div></div>` : ''}
       ${(l.type === 'Apartment' && l.floorNumber) ? `<div class="detail-block"><div class="detail-block-label">Floor Number</div><div class="detail-block-value">${l.floorNumber}</div></div>` : ''}
+      ${(l.type === 'Apartment' && l.udsSqft) ? `<div class="detail-block"><div class="detail-block-label">UDS Sq.ft</div><div class="detail-block-value">${l.udsSqft}</div></div>` : ''}
+      ${(l.type === 'Agricultural Land' && l.landUnitValue) ? `<div class="detail-block"><div class="detail-block-label">${l.landUnit||'Acre'}</div><div class="detail-block-value">${l.landUnitValue}</div></div>` : ''}
     </div>
     ${l.details ? `<p class="modal-desc">${l.details}</p>` : ''}
     ${l.instaReelUrl && getInstaReelId(l.instaReelUrl) ? buildInstaReelPlayer(l.instaReelUrl) : ''}

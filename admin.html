@@ -444,7 +444,7 @@ onSnapshot(staffQ, snap => {
       <div class="form-grid" style="margin-top:1.25rem">
         <div><div class="f-label">Property ID</div><input type="text" class="f-input" id="fId" readonly placeholder="Auto-generated"></div>
         <div><div class="f-label">Property Type <span style="color:var(--saffron)">*</span></div>
-          <select class="f-input" id="fType" onchange="toggleFloorField(this.value)">
+          <select class="f-input" id="fType" onchange="toggleTypeFields(this.value)">
             <option value="">Select Type</option>
             <option>Residential Plot</option><option>Commercial Plot</option>
             <option>Agricultural Land</option><option>Industrial Land</option>
@@ -453,10 +453,22 @@ onSnapshot(staffQ, snap => {
           </select>
         </div>
         <div id="floorFieldWrap" style="display:none"><div class="f-label">Floor Number</div><input type="text" class="f-input" id="fFloorNumber" placeholder="e.g. 3rd Floor, Ground Floor"></div>
+        <div id="udsFieldWrap" style="display:none"><div class="f-label">UDS Sq.ft</div><input type="text" class="f-input" id="fUdsSqft" placeholder="e.g. 1200"></div>
+        <div id="landUnitFieldWrap" style="display:none">
+          <div class="f-label">Land Unit</div>
+          <div style="display:flex;gap:0.5rem">
+            <select class="f-input" id="fLandUnit" style="max-width:130px;flex-shrink:0">
+              <option value="Cent">Cent</option>
+              <option value="Acre">Acre</option>
+              <option value="Ground">Ground</option>
+            </select>
+            <input type="text" class="f-input" id="fLandUnitValue" placeholder="e.g. 2.2">
+          </div>
+        </div>
         <div class="fg-full"><div class="f-label">Title <span style="color:var(--saffron)">*</span></div><input type="text" class="f-input" id="fTitle" placeholder="e.g. Prime corner plot near highway"></div>
         <div><div class="f-label">Location / Area <span style="color:var(--saffron)">*</span></div><input type="text" class="f-input" id="fLocation" placeholder="Area name, street…"></div>
         <div><div class="f-label">City / District</div><input type="text" class="f-input" id="fCity" placeholder="e.g. Nagercoil"></div>
-        <div><div class="f-label">Area Size <span style="color:var(--saffron)">*</span></div><input type="text" class="f-input" id="fSize" placeholder="e.g. 1200 sq ft"></div>
+        <div><div class="f-label">Area Size <span id="fSizeReq" style="color:var(--saffron)">*</span></div><input type="text" class="f-input" id="fSize" placeholder="e.g. 1200 sq ft"></div>
         <div><div class="f-label">Price <span style="color:var(--saffron)">*</span></div>
           <div style="display:flex;gap:0.5rem">
             <select class="f-input" id="fPriceUnit" style="max-width:110px;flex-shrink:0">
@@ -676,8 +688,12 @@ function openAddModal(){
   currentDocs=[];
   document.getElementById('modalHdrTitle').innerHTML='<i class="fas fa-plus-circle" style="color:var(--saffron);margin-right:0.5rem"></i>Add New Listing';
   document.getElementById('fId').value=generateCustomId();
-  ['fType','fTitle','fLocation','fCity','fSize','fPrice','fDimensions','fFacing','fDetails','fInstaReel','fSiteLocation','fFloorNumber'].forEach(id=>document.getElementById(id).value='');
+  ['fType','fTitle','fLocation','fCity','fSize','fPrice','fDimensions','fFacing','fDetails','fInstaReel','fSiteLocation','fFloorNumber','fUdsSqft','fLandUnitValue'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('floorFieldWrap').style.display='none';
+  document.getElementById('udsFieldWrap').style.display='none';
+  document.getElementById('landUnitFieldWrap').style.display='none';
+  document.getElementById('fLandUnit').value='Cent';
+  document.getElementById('fSizeReq').style.display='inline';
   document.getElementById('fPriceUnit').value='L';
   document.getElementById('fOwner').value='Ammanaina Real Estate';
   document.getElementById('fContact').value='+91 89392 19790';
@@ -707,7 +723,10 @@ function openEditModal(firestoreId){
   document.getElementById('fId').value=editingCustomId;
   document.getElementById('fType').value=l.type||'';
   document.getElementById('fFloorNumber').value=l.floorNumber||'';
-  toggleFloorField(l.type||'');
+  document.getElementById('fUdsSqft').value=l.udsSqft||'';
+  document.getElementById('fLandUnit').value=l.landUnit||'Cent';
+  document.getElementById('fLandUnitValue').value=l.landUnitValue||'';
+  toggleTypeFields(l.type||'');
   document.getElementById('fTitle').value=l.title||'';
   document.getElementById('fLocation').value=l.location||'';
   document.getElementById('fCity').value=l.city||'';
@@ -751,12 +770,28 @@ function openEditModal(firestoreId){
 function closeEditModal(){document.getElementById('editModal').classList.remove('open');document.body.style.overflow='';}
 function closeModalOnOverlay(e){if(e.target===document.getElementById('editModal'))closeEditModal();}
 
-/* ── FLOOR NUMBER TOGGLE (shown only for Apartment) ── */
-function toggleFloorField(type){
-  const wrap = document.getElementById('floorFieldWrap');
-  const show = type === 'Apartment';
-  wrap.style.display = show ? 'block' : 'none';
-  if(!show) document.getElementById('fFloorNumber').value='';
+/* ── TYPE-SPECIFIC FIELD TOGGLE (Apartment: Floor/UDS · Agricultural Land: Land Unit) ── */
+function toggleTypeFields(type){
+  const floorWrap = document.getElementById('floorFieldWrap');
+  const udsWrap = document.getElementById('udsFieldWrap');
+  const landWrap = document.getElementById('landUnitFieldWrap');
+
+  const isApartment = type === 'Apartment';
+  floorWrap.style.display = isApartment ? 'block' : 'none';
+  udsWrap.style.display = isApartment ? 'block' : 'none';
+  if(!isApartment){
+    document.getElementById('fFloorNumber').value='';
+    document.getElementById('fUdsSqft').value='';
+  }
+
+  const isAgri = type === 'Agricultural Land';
+  landWrap.style.display = isAgri ? 'block' : 'none';
+  if(!isAgri){
+    document.getElementById('fLandUnit').value='Cent';
+    document.getElementById('fLandUnitValue').value='';
+  }
+  // Area Size isn't mandatory for Agricultural Land — cent/acre/ground fields cover it instead
+  document.getElementById('fSizeReq').style.display = isAgri ? 'none' : 'inline';
 }
 
 /* ── ACTUAL OWNER TOGGLE (Admin-only) ── */
@@ -995,7 +1030,9 @@ async function saveListing(){
   const location=document.getElementById('fLocation').value.trim();
   const size=document.getElementById('fSize').value.trim();
   const price=document.getElementById('fPrice').value;
-  if(!type||!title||!location||!size||!price){toast('Please fill in all required fields','error');return;}
+  const isAgri = type === 'Agricultural Land';
+  if(!type||!title||!location||!price||(!isAgri&&!size)){toast('Please fill in all required fields','error');return;}
+  if(isAgri && !document.getElementById('fLandUnitValue').value.trim()){toast('Please enter the land extent (Cent/Acre/Ground)','error');return;}
 
   const priceUnit = document.getElementById('fPriceUnit').value; // 'L' (Lakh) or 'Cr' (Crore)
   const priceValue = parseFloat(price) || 0;
@@ -1020,6 +1057,9 @@ async function saveListing(){
       dimensions:document.getElementById('fDimensions').value.trim(),
       facing:document.getElementById('fFacing').value,
       floorNumber: type==='Apartment' ? document.getElementById('fFloorNumber').value.trim() : '',
+      udsSqft: type==='Apartment' ? document.getElementById('fUdsSqft').value.trim() : '',
+      landUnit: type==='Agricultural Land' ? document.getElementById('fLandUnit').value : '',
+      landUnitValue: type==='Agricultural Land' ? document.getElementById('fLandUnitValue').value.trim() : '',
       owner:document.getElementById('fOwner').value.trim(),
       contact:document.getElementById('fContact').value.trim(),
       details:document.getElementById('fDetails').value.trim(),
@@ -1193,7 +1233,7 @@ function exportToExcel(){
 
   const headers = [
     'Property ID','Title','Type','Location','City / District',
-    'Area Size','Price (₹)','Dimensions','Facing','Floor Number',
+    'Area Size','Price (₹)','Dimensions','Facing','Floor Number','UDS Sq.ft','Land Unit','Land Unit Value',
     'Posted Date','Photo Count','Document Count','Instagram Reel Link',
     'Owner Name','Owner Contact',
     'Actual Owner Name (Admin)','Actual Owner Contact (Admin)',
@@ -1219,6 +1259,9 @@ function exportToExcel(){
       l.dimensions || '',
       l.facing || '',
       l.floorNumber || '',
+      l.udsSqft || '',
+      l.landUnit || '',
+      l.landUnitValue || '',
       date,
       photoCount,
       docCount,
